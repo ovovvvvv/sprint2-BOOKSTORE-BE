@@ -3,7 +3,6 @@ const express = require('express');
 const app = express();
 
 // dotenv 모듈 
-// 포트폴리오로 쓰려면 주석 다 떼야함
 const dotenv = require('dotenv');
 dotenv.config();
 

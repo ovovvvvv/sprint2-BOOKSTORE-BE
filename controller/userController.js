@@ -115,7 +115,7 @@ const passwordReset = (req, res) => {
           const salt = crypto.randomBytes(10).toString('base64');
           const hashPassword = crypto.pbkdf2Sync(password, salt, 10000, 10, 'sha512').toString('base64');
 
-        if (beforePassword == password) {
+        if (beforePassword == hashPassword) {
             return res.status(StatusCodes.BAD_REQUEST).json({
                 message : "비밀번호가 이전과 동일합니다. 다른 비밀번호를 입력해주세요."
             })
