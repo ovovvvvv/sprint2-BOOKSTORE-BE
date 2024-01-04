@@ -9,3 +9,7 @@ VALUES ("백설공주들", "종이책", 2, "사과", "빨간 사과", "김사과
 
 INSERT INTO books (title, form, isbn, summary, detail, author, pages, contents, price, pub_date)
 VALUES ("어린왕자들", "종이책", 3, "제비", "까만 제비", "김제비", 100, "목차입니다.", 20000, "2023-12-08")
+
+INSERT INTO books (title, img, category_id, form, isbn, summary, detail, author, pages, contents,price, pub_date)
+VALUES ("콩쥐 팥쥐", 4, 0, "ebook", 4, "콩팥..", "콩심은데 콩나고..", "김콩팥", 100, "목차입니다.", 20000, "2023-12-07");
+
