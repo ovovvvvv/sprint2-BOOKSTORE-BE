@@ -19,7 +19,7 @@ JOIN category ON books.category_id = category.id;
 
 SELECT * FROM books LEFT JOIN category ON books.category_id = category.id WHERE books.id = 1;
 
-
+/* 좋아요 추가 */
 INSERT INTO likes (user_id, liked_book_id) VALUES (1, 1);
 INSERT INTO likes (user_id, liked_book_id) VALUES (1, 2);
 INSERT INTO likes (user_id, liked_book_id) VALUES (1, 3);
@@ -30,6 +30,7 @@ INSERT INTO likes (user_id, liked_book_id) VALUES (6, 2);
 INSERT INTO likes (user_id, liked_book_id) VALUES (6, 3);
 INSERT INTO likes (user_id, liked_book_id) VALUES (6, 5);
 
+/* 좋아요 삭제 */
 DELETE FROM likes WHERE user_id = 1 AND liked_book_id = 3
 
 /* 테이블의 조건을 만족하는 행 개수 */
@@ -59,4 +60,15 @@ count(): 행 개수
 AS: 컬럼 별칭
  */
 
- 
+ /* 장바구니 담기 */
+INSERT INTO cartItems (book_id, quantity, user_id)
+VALUES (1, 1, 1);
+
+/* 장바구니 조회 */
+SELECT cartItems.id, book_id, title, summary, quantity, price 
+FROM cartItems LEFT JOIN books ON cartItems.book_id = books.id;
+
+/* 장바구니에서 선택한(장바구니 아이템id) 아이템 목록 조회 */
+SELECT * FROM cartItems
+WHERE user_id = 1
+AND id IN (1,3);

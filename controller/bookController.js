@@ -1,6 +1,6 @@
 const { STATUS_CODES } = require('http');
 const conn = require('../mariadb') // db 모듈
-const {StatusCodes} = require('http-status-codes'); // status code 모듈
+
 
 // (카테고리 별, 신간 여부) 전체 도서 목록 조회
 const allBooks = (req, res) => {
@@ -75,4 +75,4 @@ const bookDetail = (req, res) => {
 module.exports = {
     allBooks,
     bookDetail,
-};
+}; 
