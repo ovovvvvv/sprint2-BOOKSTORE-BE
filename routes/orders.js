@@ -1,26 +1,16 @@
 const express = require('express');
+const { order, getOrders, getOrderDetail } = require('../controller/orderController');
 const router = express.Router();
 
 router.use(express.json());
 
 // 주문 하기
-router.post('/', (req, res) => {
-    res.json('주문 하기');
-});
+router.post('/', order );
 
 // 주문 목록 조회
-router.get('/', (req, res) => {
-    res.json('주문 목록 조회');
-});
+router.get('/', getOrders);
 
 // 주문 상세 상품 조회
-router.delete('/:id', (req, res) => {
-    res.json('주문 상세 상품 조회')
-})
-
-// // 장바구니에서 선택한 주문 예상 상품 목록 조회
-// router.get('/carts', (req, res) => {
-//     res.json('주문 예상 상품 목록 조회')
-// })
+router.delete('/:id', getOrderDetail); 
 
 module.exports = router

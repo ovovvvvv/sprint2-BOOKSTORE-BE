@@ -72,3 +72,27 @@ FROM cartItems LEFT JOIN books ON cartItems.book_id = books.id;
 SELECT * FROM cartItems
 WHERE user_id = 1
 AND id IN (1,3);
+
+/* 주문하기 */
+/* 배송 정보 입력 */
+INSERT INTO delivery (address, receiver, contact) VALUES ("서울시 노원구", "유진", "010-1234-5678")
+const delivery_id = SELECT max(id) FROM delivery;
+
+/* 주문 정보 입력 */
+INSERT INTO orders (book_title, total_quantity, total_price, user_id, delivery_id)
+VALUES ("어린왕자들", 3, 60000, 1, delivery_id);
+const order_id = SELEcT max(id) FROM orders;
+
+/* 주문 상세 목록 입력 */
+INSERT INTO orderedBook (order_id, book_id, quantity)
+VALUES (order_id, 1, 1);
+
+INSERT INTO orderedBook (order_id, book_id, quantity)
+VALUES (order_id, 5, 2);
+
+/* max함수 사용법 */
+SELECT max(id) FROM Bookshop.orderedBook;
+/* last_insert_id() 사용법
+동일 시간대에 아이디가 삽입된다면 오류가 날 수도 있음 
+ */
+SELECT last_insert_id(); 
