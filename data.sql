@@ -96,3 +96,6 @@ SELECT max(id) FROM Bookshop.orderedBook;
 동일 시간대에 아이디가 삽입된다면 오류가 날 수도 있음 
  */
 SELECT last_insert_id(); 
+
+/* 결제된 도서 장바구니에서 삭제 */
+DELETE FROm cartItems WHERE id IN (1,2,3);
