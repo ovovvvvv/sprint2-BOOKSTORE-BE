@@ -66,7 +66,8 @@ VALUES (1, 1, 1);
 
 /* 장바구니 조회 */
 SELECT cartItems.id, book_id, title, summary, quantity, price 
-FROM cartItems LEFT JOIN books ON cartItems.book_id = books.id;
+FROM cartItems LEFT JOIN books 
+ON cartItems.book_id = books.id;
 
 /* 장바구니에서 선택한(장바구니 아이템id) 아이템 목록 조회 */
 SELECT * FROM cartItems
@@ -99,3 +100,9 @@ SELECT last_insert_id();
 
 /* 결제된 도서 장바구니에서 삭제 */
 DELETE FROm cartItems WHERE id IN (1,2,3);
+
+/* 주문 내역 조회 */
+SELECT orders.id, book_title, total_quantity, total_price, created_at,
+address, receiver, contact
+FROM orders LEFT JOIN delivery
+ON orders.delivery_id = delivery.id
