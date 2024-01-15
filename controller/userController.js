@@ -1,8 +1,8 @@
-const conn = require('../mariadb') // db 모듈
-const {StatusCodes} = require('http-status-codes'); // status code 모듈
-const jwt = require('jsonwebtoken'); // 토큰을 발급받기 위해 필요한 모듈
-const crypto = require('crypto'); // crypto 모듈, nodejs 기본 모듈로 암호화 담당
-const dotenv = require('dotenv'); // dotenv 모듈
+const conn = require('../mariadb') 
+const {StatusCodes} = require('http-status-codes'); 
+const jwt = require('jsonwebtoken'); 
+const crypto = require('crypto'); 
+const dotenv = require('dotenv'); 
 dotenv.config();
 
 
@@ -10,7 +10,6 @@ const join = (req, res) => {
     const {email, password} = req.body;
 
     let sql = `INSERT INTO users(email, password, salt) VALUES(?, ?, ?)`
-
 
     // 회원가입 시 비밀번호를 암호화해서 암호화된 비밀번호와, salt값을 같이 db에 저장
     const salt = crypto.randomBytes(10).toString('base64');
@@ -45,15 +44,13 @@ const login = (req, res) => {
         // salt 값 꺼내서 날것으로 들어온 비밀번호를 암호화 해보고
         const hashPassword = crypto.pbkdf2Sync(password, loginUser.salt, 10000, 10, 'sha512').toString('base64');
 
-        // => 디비 비밀번호와 비교
-            // results에 select의 값이 들어있을거고, 이메일을 가진 친구는 1명이기 떄문에 0번째를 가져다 씁니다.
             if(loginUser && loginUser.password == hashPassword) {
                 // 토큰 발행
                 const token = jwt.sign({
                     id: loginUser.id,
                     email : loginUser.email
                 }, process.env.PRIVATE_KEY, {
-                    expiresIn : '1m', 
+                    expiresIn : '3m', 
                     issuer : "yoojin"
                 });
 
@@ -88,7 +85,7 @@ const passwordResetRequest = (req, res) => {
             const user = results[0];
             if (user) {
                 return res.status(StatusCodes.OK).json({
-                    // 이메일 초기화를 위해 이메일을 보내줄것임
+                    // 이메일 초기화를 위해 이메일을 보내줍니다
                     email : email
                 });
             } else {

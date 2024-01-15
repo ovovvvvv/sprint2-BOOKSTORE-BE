@@ -1,14 +1,13 @@
+const ensureAuthorization = require('../auth'); 
 const jwt = require('jsonwebtoken');
-const { STATUS_CODES } = require('http');
-const conn = require('../mariadb') // db 모듈
-const {StatusCodes} = require('http-status-codes'); // status code 모듈
-const dotenv = require('dotenv'); // dotenv 모듈
-dotenv.config();
-
+const conn = require('../mariadb') 
+const {StatusCodes} = require('http-status-codes'); 
 
 // 장바구니 담기
 const addToCart = (req, res) => {
     const {book_id, quantity} = req.body;
+
+    let authorization = ensureAuthorization(req, res);
 
     if(authorization instanceof jwt.TokenExpiredError){
         return res.status(StatusCodes.UNAUTHORIZED).json({
@@ -49,11 +48,17 @@ const getCartItems = (req, res) => {
         });
     } else {
         let sql = `SELECT cartItems.id, book_id, title, summary, quantity, price 
-                FROM cartItems LEFT JOIN books 
-                ON cartItems.book_id = books.id
-                WHERE user_id=? AND cartItems.id IN (?)`;
+        FROM cartItems LEFT JOIN books 
+        ON cartItems.book_id = books.id
+        WHERE user_id=?`;
 
-        let values = [authorization.id, selected];
+        let values = [authorization.id];
+
+        if (selected){ // 주문서 작성 시 '선택한 장바구니 목록 조회'
+           sql += ` AND cartItems.id IN (?)`;
+           values.push(selected);
+        } 
+
         conn.query(sql, values, 
         (err, results ) => {
             if (err) {
@@ -68,7 +73,6 @@ const getCartItems = (req, res) => {
 // 장바구니 도서 삭제
 const removeCartItem = (req, res) => {
     const cartItemId = req.params.id;
-    // const {id} = req.params; // cartItemId
 
     let sql = "DELETE FROM cartItems WHERE id=?";
     conn.query(sql, cartItemId,
@@ -79,25 +83,6 @@ const removeCartItem = (req, res) => {
             }
             return res.status(StatusCodes.OK).json(results);
         })
-}
-
-const ensureAuthorization = (req, res) => {
-
-    try{
-        let receivedJwt = req.headers["authorization"];
-        console.log("received jwt : " ,receivedJwt)
-
-        let decodedJwt = jwt.verify(receivedJwt, process.env.PRIVATE_KEY)
-        console.log(decodedJwt);
-
-        return decodedJwt;
-    } catch (err) {
-        console.log(err.name);
-        console.log(err.message);
-
-       return err;
-    }
-
 }
 
 
