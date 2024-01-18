@@ -1,7 +1,7 @@
 const conn = require('../mariadb') 
 const {StatusCodes} = require('http-status-codes'); 
 const jwt = require('jsonwebtoken'); 
-const { encryptPassword } = require('../utils/encryption');
+const crypto = require('crypto'); 
 const dotenv = require('dotenv'); 
 dotenv.config();
 
@@ -9,13 +9,15 @@ dotenv.config();
 const join = (req, res) => {
     const {email, password} = req.body;
 
-    const { hashedPassword, salt} = encryptPassword(password);
-
     let sql = `INSERT INTO users(email, password, salt) VALUES(?, ?, ?)`
 
-    console.log(hashedPassword);
+    // 회원가입 시 비밀번호를 암호화해서 암호화된 비밀번호와, salt값을 같이 db에 저장
+    const salt = crypto.randomBytes(10).toString('base64');
+    const hashPassword = crypto.pbkdf2Sync(password, salt, 10000, 10, 'sha512').toString('base64');
 
-    let values = [email, hashedPassword, salt];
+    console.log(hashPassword);
+
+    let values = [email, hashPassword, salt];
     conn.query(sql, values,
         (err, results) => {
             if(err){
@@ -30,51 +32,46 @@ const join = (req, res) => {
         });
     };
 
-    const login = (req, res) => {
-        const { email, password } = req.body;
-    
-        let sql = 'SELECT * FROM users WHERE email = ?';
-    
-        conn.query(sql, email, (err, results) => {
-            if (err) {
-                console.error(err);
-                return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-                    error: 'Internal Server Error'
-                });
-            }
-    
-            if (!results || results.length === 0) {
-                return res.status(StatusCodes.UNAUTHORIZED).json({
-                    error: 'Invalid credentials'
-                });
-            }
-    
+const login = (req, res) => {
+    const {email, password} = req.body;
+
+    let sql = 'SELECT * FROM users WHERE email = ?';
+    conn.query(sql, email,
+        (err, results) => {
+            if(err) {
+                console.log(err);
+                return res.status(StatusCodes.BAD_REQUEST).end();
+            } 
+
             const loginUser = results[0];
-            const { hashedPassword } = encryptPassword(password, loginUser.salt);
-    
-            if (loginUser.password === hashedPassword) {
+
+        // salt 값 꺼내서 날것으로 들어온 비밀번호를 암호화 해보고
+        const hashPassword = crypto.pbkdf2Sync(password, loginUser.salt, 10000, 10, 'sha512').toString('base64');
+
+            if(loginUser && loginUser.password == hashPassword) {
+                // 토큰 발행
                 const token = jwt.sign({
                     id: loginUser.id,
-                    email: loginUser.email
+                    email : loginUser.email
                 }, process.env.PRIVATE_KEY, {
-                    expiresIn: '10m',
-                    issuer: "yoojin"
+                    expiresIn : '10m', 
+                    issuer : "yoojin"
                 });
-    
+
+                // 토큰 쿠키에 담기
                 res.cookie("token", token, {
-                    httpOnly: true
+                    httpOnly : true
                 });
-    
-                console.log(results);
+                console.log(token);
+
                 return res.status(StatusCodes.OK).json(results);
             } else {
-                return res.status(StatusCodes.UNAUTHORIZED).json({
-                    error: 'Invalid credentials'
-                });
+                return res.status(StatusCodes.UNAUTHORIZED)
+                // 401 : Unauthorized, 403 : Forbidden 
             }
-        });
+        })
     };
-    
+
 
 const passwordResetRequest = (req, res) => {
     const {email} = req.body;

@@ -106,3 +106,6 @@ SELECT orders.id, book_title, total_quantity, total_price, created_at,
 address, receiver, contact
 FROM orders LEFT JOIN delivery
 ON orders.delivery_id = delivery.id
+
+SELECT SQL_CALC_FOUND_ROWS * FROM Bookshop.books LIMIT 4 OFFSET 0;
+SELECT found_rows();
