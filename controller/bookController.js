@@ -1,7 +1,8 @@
 const ensureAuthorization = require('../auth'); 
 const jwt = require('jsonwebtoken');
 const {StatusCodes} = require('http-status-codes');
-const conn = require('../mariadb') // db 모듈
+const conn = require('../mariadb'); // db 모듈
+const { query } = require('express');
 
 
 // (카테고리 별, 신간 여부) 전체 도서 목록 조회
@@ -9,10 +10,6 @@ const allBooks = (req, res) => {
     let allBooksRes = {};
     let {category_id, newBook, limit, currentPage} = req.query;
 
-    // limit : page당 도서 수
-    // currentPage : 현재 몇 페이지인지 ex. 1, 2, 3 ...
-    // offset : 0, 3, 6, .... 
-    // limit * (currentPage - 1)
     let offset = limit * (currentPage - 1);
 
     let sql = "SELECT SQL_CALC_FOUND_ROWS *, (SELECT count(*) FROM likes WHERE books.id = liked_book_id) AS likes FROM books";
@@ -29,11 +26,12 @@ const allBooks = (req, res) => {
     }
     sql += " LIMIT ? OFFSET ?";
     values.push(parseInt(limit), offset);
+
     conn.query(sql, values,
         (err, results) => {
             if(err){
                 console.log(err);
-                // return res.status(StatusCodes.BAD_REQUEST).end();
+                return res.status(StatusCodes.BAD_REQUEST).end();
             }
             console.log(results);
             if(results.length){
@@ -82,27 +80,14 @@ const bookDetail = (req, res) => {
     } else if (authorization instanceof ReferenceError){
         let book_id = req.params.id;
 
-        let sql = `SELECT *,
-                    (SELECT count(*) FROM likes WHERE books.id = liked_book_id)
+        let sql = `SELECT *
                     FROM books
                     LEFT JOIN category
                     ON books.category_id = category.category_id
                     WHERE books.id=?;`;
 
-        let values = [book_id];            
-        conn.query(sql, values, (err, results ) => {
-            if (err) {
-                console.log(err);
-                return res.status(StatusCodes.BAD_REQUEST).end();
-            }
-
-            const book = results[0];
-            if (book) {
-                return res.status(StatusCodes.OK).json(book)
-            } else {
-                return res.status(StatusCodes.UNAUTHORIZED).end();
-            }
-        })
+        let values = [book_id];    
+        queryWithValues(res, sql, values);        
 
     } else{
         let book_id = req.params.id;
@@ -116,22 +101,25 @@ const bookDetail = (req, res) => {
                     WHERE books.id=?;`;
 
         let values = [authorization.id, book_id ,book_id];            
-        conn.query(sql, values, (err, results ) => {
-                if (err) {
-                    console.log(err);
-                    return res.status(StatusCodes.BAD_REQUEST).end();
-                }
-
-                const book = results[0];
-                if (book) {
-                    return res.status(StatusCodes.OK).json(book)
-                } else {
-                    return res.status(StatusCodes.UNAUTHORIZED).end();
-                }
-            })
+        queryWithValues(res, sql, values);
     }
 };
 
+const queryWithValues = (res, sql, values) => {
+    conn.query(sql, values, (err, results ) => {
+        if (err) {
+            console.log(err);
+            return res.status(StatusCodes.BAD_REQUEST).end();
+        }
+
+        const book = results[0];
+        if (book) {
+            return res.status(StatusCodes.OK).json(book)
+        } else {
+            return res.status(StatusCodes.UNAUTHORIZED).end();
+        }
+    })
+}
 
 module.exports = {
     allBooks,
