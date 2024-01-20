@@ -3,4 +3,3 @@
 # Ignore .env files
 *.env
 .refactoring.txt
-.original.txt
