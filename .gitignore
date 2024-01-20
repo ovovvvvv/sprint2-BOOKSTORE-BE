@@ -1,5 +1,5 @@
 # .gitignore
 
-# Ignore .env files
-*.env
-.refactoring.txt
+.env
+refactoring.txt
+node_modules/
