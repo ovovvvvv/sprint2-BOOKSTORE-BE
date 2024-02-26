@@ -1,4 +1,4 @@
-const ensureAuthorization = require('../auth');
+const ensureAuthorization = require('../../auth');
 const jwt = require('jsonwebtoken'); 
 const mariadb = require('mysql2/promise');
 const {StatusCodes} = require('http-status-codes');
