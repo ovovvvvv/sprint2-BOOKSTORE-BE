@@ -10,7 +10,6 @@ const allCategory = (req, res) => {
       console.log(err);
       return res.status(StatusCodes.BAD_REQUEST).end();
     }
-    console.log(results);
     return handleResult(res, results);
   });
 };

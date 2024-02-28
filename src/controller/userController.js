@@ -54,8 +54,6 @@ const login = (req, res) => {
     const loginUser = results[0];
     const { hashedPassword } = encryptPassword(password, loginUser.salt);
 
-    console.log(loginUser.password, hashedPassword);
-
     if (loginUser && loginUser.password === hashedPassword) {
       const token = jwt.sign(
         {
@@ -144,7 +142,6 @@ const passwordReset = (req, res) => {
 
       conn.query(updateSql, values, (updateErr, updateResults) => {
         if (updateErr) {
-          console.log(updateErr);
           return res.status(StatusCodes.BAD_REQUEST).end();
         }
         if (updateResults.affectedRows === 0) {

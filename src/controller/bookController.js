@@ -3,8 +3,7 @@ const jwt = require("jsonwebtoken");
 const { StatusCodes } = require("http-status-codes");
 const conn = require("../../mariadb"); // db 모듈
 
-// (카테고리 별, 신간 여부) 전체 도서 목록 조회
-const allBooks = (req, res) => {
+const allBooks = async (req, res) => {
   let allBooksRes = {};
   let { category_id, newBook, limit, currentPage } = req.query;
 
@@ -28,13 +27,11 @@ const allBooks = (req, res) => {
   sql += " LIMIT ? OFFSET ?";
   values.push(parseInt(limit), offset);
 
-  conn.query(sql, values, (err, results) => {
-    if (err) {
-      console.log(err);
-      return res.status(StatusCodes.BAD_REQUEST).end();
-    }
+  try {
+    const [results] = await conn.promise().query(sql, values);
+
     if (results.length) {
-      results.map((result) => {
+      results.forEach((result) => {
         result.pubDate = result.pub_date;
         delete result.pub_date;
         result.categoryId = result.category_id;
@@ -44,22 +41,20 @@ const allBooks = (req, res) => {
     } else {
       return res.status(StatusCodes.NOT_FOUND).end();
     }
-  });
 
-  sql = "SELECT found_rows()";
-  conn.query(sql, (err, results) => {
-    if (err) {
-      console.log(err);
-      return res.status(StatusCodes.BAD_REQUEST).end();
-    }
+    const [totalCount] = await conn.promise().query("SELECT found_rows()");
+
     let pagination = {};
     pagination.currentPage = parseInt(currentPage);
-    pagination.totalCount = results[0]["found_rows()"];
+    pagination.totalCount = totalCount[0]["found_rows()"];
 
     allBooksRes.pagination = pagination;
 
     return res.status(StatusCodes.OK).json(allBooksRes);
-  });
+  } catch (err) {
+    console.log(err);
+    return res.status(StatusCodes.BAD_REQUEST).end();
+  }
 };
 
 const bookDetail = (req, res) => {
@@ -73,21 +68,10 @@ const bookDetail = (req, res) => {
     return res.status(StatusCodes.BAD_REQUEST).json({
       message: "잘못된 토큰입니다.",
     });
-  } else if (authorization instanceof ReferenceError) {
-    let book_id = req.params.id;
-
-    let sql = `SELECT *
-                        FROM books
-                        LEFT JOIN category
-                        ON books.category_id = category.category_id
-                        WHERE books.id=?;`;
-
-    let values = [book_id];
-    bookDetailQuery(res, sql, values);
   } else {
     let book_id = req.params.id;
 
-    let sql = `SELECT *,
+    let sql = `SELECT books.*, category.*, 
                         (SELECT count(*) FROM likes WHERE books.id = liked_book_id) AS likes,
                         (SELECT EXISTS (SELECT * FROM likes WHERE user_id=? AND liked_book_id=?)) AS liked
                         FROM books
@@ -96,21 +80,29 @@ const bookDetail = (req, res) => {
                         WHERE books.id=?;`;
 
     let values = [authorization.id, book_id, book_id];
+    if (authorization instanceof ReferenceError) {
+      sql = `SELECT books.*, category.*, 
+                        (SELECT count(*) FROM likes WHERE books.id = liked_book_id) AS likes
+                        FROM books
+                        LEFT JOIN category
+                        ON books.category_id = category.category_id
+                        WHERE books.id=?;`;
+      values = [book_id];
+    }
     bookDetailQuery(res, sql, values);
   }
 };
-
 const handleResult = (res, results) => {
   if (results.length) {
-    results.map(function (result) {
-      result.pubDate = result.pub_date;
-      delete result.pub_date;
-      result.categoryId = result.category_id;
-      delete result.category_id;
-      result.categoryName = result.category_name;
-      delete result.category_name;
-    });
-    return res.status(StatusCodes.OK).json(results);
+    let result = results[0];
+    result.pubDate = result.pub_date;
+    delete result.pub_date;
+    result.categoryId = result.category_id;
+    delete result.category_id;
+    result.categoryName = result.category_name;
+    delete result.category_name;
+    result.likes = result.likes;
+    return res.status(StatusCodes.OK).json(result);
   } else {
     return res.status(StatusCodes.NOT_FOUND).end();
   }
@@ -122,6 +114,7 @@ const bookDetailQuery = (res, sql, values) => {
       console.log(err);
       return res.status(StatusCodes.BAD_REQUEST).end();
     }
+
     handleResult(res, results);
   });
 };
