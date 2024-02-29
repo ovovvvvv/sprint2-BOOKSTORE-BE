@@ -47,7 +47,7 @@ const order = async (req, res) => {
     let orderId = results.insertId;
 
     // items를 가지고 장바구니에서 book_id, quantity를 꺼냄
-    sql = `SELECT book_id, quantity FROM cartItems WHERE id IN (?)`;
+    sql = `SELECT book_id AS bookId, quantity FROM cartItems WHERE id IN (?)`;
     let [orderItems, fields] = await conn.query(sql, [items]);
 
     // orderedBook 테이블에 데이터 삽입
